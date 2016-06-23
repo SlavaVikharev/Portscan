@@ -1,3 +1,4 @@
+import os
 import re
 import sys
 import socket
@@ -6,6 +7,20 @@ import argparse
 import threading
 from queue import Queue
 from select import select
+
+
+def is_user_admin():
+    if os.name == 'nt':
+        import ctypes
+        try:
+            return ctypes.windll.shell32.IsUserAnAdmin()
+        except:
+            traceback.print_exc()
+            return False
+    elif os.name == 'posix':
+        return os.getuid() == 0
+    else:
+        raise RuntimeError("Unsupported operating system: %s" % (os.name,))
 
 
 # PROTO CHECKER
@@ -224,6 +239,10 @@ def get_cur_ip():
 
 
 if __name__ == '__main__':
+    if not is_user_admin():
+        print('Please run the program as Administrator')
+        sys.exit()
+
     TIMEOUT = 2
 
     socket.setdefaulttimeout(TIMEOUT)
