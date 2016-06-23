@@ -70,14 +70,18 @@ def check_dns(host, port, tcp):
     message = b'\x00\x0f\x01\x00\x00\x01'\
               b'\x00\x00\x00\x00\x00\x00'\
               b'\x02vk\x03com\x00\x00\x01\x00\x01'
-    
+
     data = get_resp(host, port, tcp, message)
 
     if data is None:
         return False
-    
+
     try:
-        data = struct.unpack('!H2B4H', data[:12])
+        unpacked = struct.unpack('!H2B4H', data[:12])
+        if (unpacked[1] & 128) >> 7 != 1:
+            return False
+        if unpacked[3] != 1:
+            return False
         return True
     except struct.error as e:
         return False
@@ -89,7 +93,7 @@ def check_smtp(host, port, tcp):
     if data is None:
         return False
 
-    if re.search(br'220', data):
+    if re.search(br'^220', data):
         return True
 
     return False
@@ -101,7 +105,7 @@ def check_pop3(host, port, tcp):
     if data is None:
         return False
 
-    if re.search(br'OK', data):
+    if re.search(br'^\+OK', data):
         return True
 
     return False
